@@ -394,8 +394,8 @@ class SPI:
 
 
 class BOOT(UART):
-    def __init__(self, port, baudrate):
-        super().__init__(port, baudrate, 'boot_log.txt', 'adcu login:', 1)
+    def __init__(self, port, baudrate, output_file):
+        super().__init__(port, baudrate, output_file, 'adcu login:', 1)
 
 
 
@@ -411,20 +411,25 @@ def main():
     # print(serial_baudrate)
     # print(serial_timeout)
 
-    # A_core = BOOT(serial_port, serial_baudrate)  
+    # A_core = BOOT(serial_port, serial_baudrate, 'L_boot_log.txt')  
     # A_core.connect_serial()
     # print("Power on")
     # A_core.read_and_save_log('w', 0)
- 
-    basic = Basic(serial_port, serial_baudrate)
-    basic.connect_serial()
-    # response = uart.execute_command('root\n cd ..\n', 0.5)
-    f = basic.execute_command('root\ncd ..\n', 0.5)
-    basic.S_L_bring_up_test()
-    basic.S_L_DDR_memory_info_test()
-    basic.S_L_CPU_load_test()
-    basic.S_L_EMMC_partition_test()
-    basic.S_L_SPI_Nand_Driver_test()
+
+    R_core = BOOT(serial_port, serial_baudrate,'R_boot_log.txt')  
+    R_core.connect_serial()
+    print("Power on")
+    R_core.read_and_save_log('w', 0)
+
+    # basic = Basic(serial_port, serial_baudrate)
+    # basic.connect_serial()
+    # # response = uart.execute_command('root\n cd ..\n', 0.5)
+    # f = basic.execute_command('root\ncd ..\n', 0.5)
+    # basic.S_L_bring_up_test()
+    # basic.S_L_DDR_memory_info_test()
+    # basic.S_L_CPU_load_test()
+    # basic.S_L_EMMC_partition_test()
+    # basic.S_L_SPI_Nand_Driver_test()
 
 
 if __name__ == "__main__":
