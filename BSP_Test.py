@@ -38,7 +38,8 @@ class UART:
         #连接到串口
         try:
             self.serial = serial.Serial(self.port, self.baudrate, timeout=1)
-        except serial.SerialException as e:
+            #print(self.serial)
+        except self.serial.SerialException as e:
             print(f"Error: {e}")
 
     def read_and_save_log(self, write_mode, read_mode=1):
@@ -68,7 +69,6 @@ class UART:
                             if self.prompt in data:
                                 break  # 退出循环
                     return "OK"
-
         except serial.SerialException as e:
             return False
 
@@ -80,6 +80,7 @@ class UART:
     #         self.serial.close()
     #         print(f"Connection to {self.port} closed.")    
 
+
 def convert_memory_string_to_numeric(memory_str):
         # 定义函数用于将带有单位的内存字符串转换为数字
         if 'Gi' in memory_str:
@@ -88,6 +89,7 @@ def convert_memory_string_to_numeric(memory_str):
             return float(memory_str.replace('Mi', ''))
         else:
             return float(memory_str)
+
 
 class Basic(UART):
     #执行Linux基础命令类，检查返回结果
@@ -244,6 +246,44 @@ class Basic(UART):
         #print(result5)
         #print(df_output5)
 
+class R_Basic(UART):
+    #执行R核基础命令类，检查返回结果
+    def __init__(self, port, baudrate):
+        super().__init__(port, baudrate, 'R_basic_log.md', '', 1)   
+
+    def execute_command(self, command, delay):
+        """
+        执行系统命令，并返回命令的输出，可选地添加等待时间。
+        参数：
+        - command: 要执行的系统命令。
+        - delay: 执行命令前的等待时间（秒）。
+        返回：
+        - 命令的输出字符串。
+        """
+        if self.serial:
+            
+            self.serial.write(command.encode('utf-8'))
+            time.sleep(delay)  # 等待响应
+            result = self.read_and_save_log('a', 1)
+            if result == None:
+                print("返回结果为空")
+            return result
+        else:
+            print("Not connected to a serial port.")
+            return "ERROR"
+
+    def S_R_bring_up_test(self):
+        #启动成功测试
+        result = self.execute_command('ps tsk\n', 2)
+        print(result)
+        # df_output = send_command(serial_connection, 'pwd\r', 1)
+        # result = remove_first_and_last_lines(df_output)
+        # l = len(result)
+        # #print(f"The length of the string is: {l}")
+        # if result == "/\r":
+        #     print('bring up ok')
+        # else:
+        #     print('error:',result)
 
 
 class Ethernet:
@@ -399,7 +439,6 @@ class BOOT(UART):
 
 
 
-
 def main():
     # 串口配置
     with open('data.json', 'r') as json_file:
@@ -411,15 +450,14 @@ def main():
     # print(serial_baudrate)
     # print(serial_timeout)
 
+
+
+
+
     # A_core = BOOT(serial_port, serial_baudrate, 'L_boot_log.txt')  
     # A_core.connect_serial()
     # print("Power on")
     # A_core.read_and_save_log('w', 0)
-
-    R_core = BOOT(serial_port, serial_baudrate,'R_boot_log.txt')  
-    R_core.connect_serial()
-    print("Power on")
-    R_core.read_and_save_log('w', 0)
 
     # basic = Basic(serial_port, serial_baudrate)
     # basic.connect_serial()
@@ -430,6 +468,20 @@ def main():
     # basic.S_L_CPU_load_test()
     # basic.S_L_EMMC_partition_test()
     # basic.S_L_SPI_Nand_Driver_test()
+
+
+    #R核--------------------------------------
+
+    R_core = BOOT(serial_port, serial_baudrate,'R_boot_log.txt')  
+    R_core.connect_serial()
+    print("Power on")
+    R_core.read_and_save_log('w', 0)
+
+    rbasic = R_Basic(serial_port, serial_baudrate)
+    rbasic.connect_serial()
+    rbasic.execute_command('\n', 0.5)
+    rbasic.S_R_bring_up_test()
+
 
 
 if __name__ == "__main__":
